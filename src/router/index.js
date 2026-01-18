@@ -16,7 +16,24 @@ const routes = [
   {
     path: '/news/:id',
     component: NewsDetail,
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('../views/Login.vue')
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: () => import('../views/Register.vue')
+  },
+  // router/index.js
+  {
+    path: '/profile',
+    component: () => import('../views/profile.vue'),
+    meta: { title: '个人中心', requiresAuth: true }
   }
+
 ]
 
 const router = createRouter({
@@ -25,7 +42,7 @@ const router = createRouter({
 })
 
 router.afterEach((to) => {
-  const siteName = '百目新闻(•ө•)'
+  const siteName = '百目新闻'
 
   if (to.meta.title) {
     document.title = `${to.meta.title} - ${siteName}`

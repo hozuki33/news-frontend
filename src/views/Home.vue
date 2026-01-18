@@ -29,6 +29,7 @@
         :list="section.list"
         :page-size="5"
         height="320px"
+        :category-id="section.id"
       >
         <template #default="{ pageItems }">
           <div class="game-row">
@@ -47,8 +48,9 @@
         v-else-if="section.name === '动画资讯'"
         :title="section.name"
         :list="section.list"
-        :page-size="12"
-        height="570px"
+        :page-size="8"
+        height="410px"
+        :category-id="section.id"
       >
         <template #default="{ pageItems }">
           <div class="anime-grid">
@@ -66,84 +68,92 @@
         v-if="section.name === '通知公告'"
         :title="section.name"
         :list="section.list"
+        :category-id="section.id"
       />
-
-
-      <!-- 其它分类（普通卡片，保持你原来的） -->
-      <!-- <div v-else class="section">
-        <div class="section-header">
-          <h3>{{ section.name }}</h3>
-        </div>
-
-        <el-row :gutter="20">
-          <el-col
-            v-for="item in section.list"
-            :key="item.id"
-            :md="8"
-          >
-            <el-card shadow="hover" @click="openNews(item.id)">
-              <img :src="item.coverUrl || defaultImg" class="card-img" />
-              <div class="card-title">{{ item.title }}</div>
-            </el-card>
-          </el-col>
-        </el-row>
-      </div> -->
 
     </div>
   </div>
 </template>
 
-
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import NoticeListSection from '../components/NoticeListSection.vue'
-
-import HomePagedSection from '../components/HomePagedSection.vue'
-import GameCard from '../components/GameCard.vue'
-import AnimeCard from '../components/AnimeCard.vue'
-
-import { fetchCategoryList } from '../api/category'
-import { fetchNewsList } from '../api/news'
-
-const router = useRouter()
-
-const heroNews = ref([])
-const sections = ref([])
-const defaultImg = '/default-cover.jpg'
-
-onMounted(async () => {
-  const catRes = await fetchCategoryList()
-  const categories = catRes.data || []
-
-  for (const cat of categories) {
-    const res = await fetchNewsList({
-      page: 1,
-      pageSize: cat.name === '今日要闻' ? 5 : 6,
-      categoryId: cat.id
-    })
-
-    if (cat.name === '今日要闻') {
-      heroNews.value = res.data.rows
-    } else {
+  import { ref, onMounted } from 'vue'
+  import { useRouter } from 'vue-router'
+  
+  import HomePagedSection from '../components/HomePagedSection.vue'
+  import GameCard from '../components/GameCard.vue'
+  import AnimeCard from '../components/AnimeCard.vue'
+  import NoticeListSection from '../components/NoticeListSection.vue'
+  
+  import { fetchCategoryList } from '../api/category'
+  import { fetchNewsList } from '../api/news'
+  
+  const router = useRouter()
+  
+  const heroNews = ref([])
+  const sections = ref([])
+  const defaultImg = '/default-cover.jpg'
+  
+  /**
+   * 拉取某分类前 N 页数据（首页专用）
+   */
+  async function fetchFirstPages(categoryId, pageSize, pages = 2) {
+    const all = []
+  
+    for (let page = 1; page <= pages; page++) {
+      const res = await fetchNewsList(page, pageSize, categoryId)
+      all.push(...res.data.rows)
+    }
+  
+    return all
+  }
+  
+  function openNews(id) {
+    router.push(`/news/${id}`)
+  }
+  
+  onMounted(async () => {
+    const { data: categories = [] } = await fetchCategoryList()
+  
+    for (const cat of categories) {
+      // 今日要闻（顶部大图）
+      if (cat.name === '今日要闻') {
+        const res = await fetchNewsList(1, 5, cat.id)
+        heroNews.value = res.data.rows
+        continue
+      }
+  
+      // 游戏快报（2 页 × 5 条）
+      if (cat.name === '游戏快报') {
+        const list = await fetchFirstPages(cat.id, 5, 2)
+        sections.value.push({
+          id: cat.id,
+          name: cat.name,
+          list
+        })
+        continue
+      }
+  
+      // 动画资讯（2 页 × 12 条）
+      if (cat.name === '动画资讯') {
+        const list = await fetchFirstPages(cat.id, 8, 2)
+        sections.value.push({
+          id: cat.id,
+          name: cat.name,
+          list
+        })
+        continue
+      }
+  
+      // 通知公告（普通列表，单页即可）
+      const res = await fetchNewsList(1, 10, cat.id)
       sections.value.push({
         id: cat.id,
         name: cat.name,
         list: res.data.rows
       })
     }
-  }
-})
-
-function openNews(id) {
-  router.push(`/news/${id}`)
-}
-
-function goCategory(categoryId) {
-  router.push(`/category/${categoryId}`)
-}
-</script>
-
+  })
+  </script>
 <style scoped>
 .home {
   padding: 80px 90px 40px 90px;

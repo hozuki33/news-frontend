@@ -1,14 +1,10 @@
 <template>
   <div class="container">
-    <el-card
+    <NewsListCard
       v-for="n in newsList"
       :key="n.id"
-      @click="goDetail(n.id)"
-      class="card"
-    >
-      <h3>{{ n.title }}</h3>
-      <p>{{ n.content.substring(0, 80) }}...</p>
-    </el-card>
+      :news="n"
+    />
 
     <el-pagination
       background
@@ -25,6 +21,7 @@ import { ref, onMounted, watch } from 'vue'
 import { fetchNewsList } from '../api/news'
 import { useRoute, useRouter } from 'vue-router'
 import { getCategory } from '../api/category'
+import NewsListCard from '../components/NewsListCard.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -45,14 +42,6 @@ const loadData = async (page = 1) => {
   total.value = res.data.total
 }
 
-// onMounted(() => loadData())
-// watch(
-//   () => route.params.id,
-//   () => {
-//     loadData(1)
-//     window.scrollTo({ top: 0 })   // 可选：切换分类后回到顶部
-//   }
-// )
 onMounted(async () => {
   await loadData()
   await updateTitle()
@@ -72,7 +61,7 @@ const goDetail = (id) => router.push(`/news/${id}`)
 
 const updateTitle = async () => {
   // if (!route.params.id) {
-  //   document.title = '百目新闻(•ө•)'
+  //   document.title = '百目新闻'
   //   return
   // }
 
@@ -80,15 +69,15 @@ const updateTitle = async () => {
   const res = await getCategory(id)
 
   if (res?.data?.name) {
-    document.title = `${res.data.name}-百目新闻(•ө•)`
+    document.title = `${res.data.name}-百目新闻`
   }
 }
 
 </script>
 
 <style scoped>
-.card {
-  margin: 12px 0;
-  cursor: pointer;
+.container {
+  padding-top: 80px;
 }
+
 </style>

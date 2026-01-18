@@ -78,7 +78,7 @@
   }
   
   .anime-card:hover .mask {
-    height: 35%;
+    height: 38%;
   }
   
   /* 标题 */
